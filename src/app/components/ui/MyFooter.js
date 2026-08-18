@@ -13,6 +13,10 @@ export default function MyFooter({ locale = 'en' }) {
                     <Link href="https://github.com/ezshine/twitterxdownload" target="_blank"><Chip color="danger" size="sm" variant="flat" className="ml-2 -mt-1.5">v{process.env.APP_VERSION}</Chip></Link>
                 </div>
                 <p className="text-sm text-gray-500 mb-7">{t('The fastest and most reliable Twitter video downloader. Free to use, no registration required.')}</p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm mb-4">
+                    <a href="https://www.concitech.org/" target="_blank" rel="noopener noreferrer" className="hover:text-primary">Concitech ↗</a>
+                    <a href="https://ai.concitech.org/" target="_blank" rel="noopener noreferrer" className="hover:text-primary">Concitech AI Daily ↗</a>
+                </div>
                 <p className="text-sm text-gray-500">© 2024 <a href="https://twitterxdownload.com" target="_blank">TwitterXDownload</a> {t('All rights reserved.')}</p>
             </div>
             <div className="hidden md:flex flex-col gap-4">
