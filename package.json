@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "check:webmcp": "node scripts/check-webmcp.mjs"
   },
   "dependencies": {
     "@heroui/react": "^2.7.9",

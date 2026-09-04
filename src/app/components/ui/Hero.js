@@ -2,7 +2,9 @@
 import { getTranslation } from '@/lib/i18n';
 import { Button, addToast } from '@heroui/react';
 import { RiDownloadLine } from '@remixicon/react';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
+
+const twitterUrlPattern = /^https?:\/\/(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/;
 
 export default function Hero({ locale = 'en', 
     downloadButtonLabel = 'Download', 
@@ -16,6 +18,58 @@ export default function Hero({ locale = 'en',
     }
 
     const inputRef = useRef(null);
+    const onDownloadRef = useRef(onDownload);
+    onDownloadRef.current = onDownload;
+
+    useEffect(() => {
+        const modelContext = document.modelContext;
+        if (!modelContext?.registerTool) return;
+
+        const controller = new AbortController();
+
+        modelContext.registerTool({
+            name: 'prepare_x_media',
+            description: '校验 X/Twitter 帖子链接，填入页面输入框并启动现有媒体解析流程。只展示解析结果，不自动保存文件。',
+            inputSchema: {
+                type: 'object',
+                properties: {
+                    url: {
+                        type: 'string',
+                        maxLength: 500,
+                        pattern: '^https?://(twitter\\.com|x\\.com)/[a-zA-Z0-9_]+/status/[0-9]+',
+                        description: '完整的 X 或 Twitter 帖子链接。',
+                    },
+                },
+                required: ['url'],
+                additionalProperties: false,
+            },
+            annotations: { readOnlyHint: false, untrustedContentHint: true },
+            execute: async ({ url } = {}) => {
+                const normalizedUrl = String(url || '').trim();
+                if (!normalizedUrl || normalizedUrl.length > 500 || !twitterUrlPattern.test(normalizedUrl)) {
+                    throw new Error('url 必须是有效的 X 或 Twitter 帖子链接。');
+                }
+                if (!inputRef.current) {
+                    throw new Error('页面输入框尚未就绪，请稍后重试。');
+                }
+
+                inputRef.current.value = normalizedUrl;
+                inputRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+                inputRef.current.focus();
+                await onDownloadRef.current(normalizedUrl);
+
+                return JSON.stringify({
+                    status: 'started',
+                    url: normalizedUrl,
+                    message: '链接已填入页面，媒体解析已启动；请在页面中查看并选择下载项。',
+                });
+            },
+        }, { signal: controller.signal }).catch((error) => {
+            if (error?.name !== 'AbortError') console.warn('WebMCP tool registration failed:', error);
+        });
+
+        return () => controller.abort();
+    }, []);
 
     return (
         <>
@@ -53,9 +107,6 @@ export default function Hero({ locale = 'en',
                         onPress={() => {
                             // 从inputRef中获取
                             const text = inputRef.current.value.trim();
-
-                            // 校验URL格式
-                            const twitterUrlPattern = /^https?:\/\/(twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/;
 
                             if (!text) {
                                 addToast({
